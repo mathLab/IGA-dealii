@@ -1,0 +1,6 @@
+
+template class IgaHandler<1,1>;
+ 
+template class IgaHandler<2,2>;
+
+template class IgaHandler<3,3>;
