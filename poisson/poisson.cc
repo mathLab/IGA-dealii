@@ -1,9 +1,9 @@
 /* ---------------------------------------------------------------------
- * $Id: step-4.cc 30526 2013-08-29 20:06:27Z felix.gruber $
+ * Copyright (C) 1999 - 2015 by the deal.II authors
+ * Copyright (C) 2015 by Marco Tezzele, Nicola Cavallini, Luca Heltai
  *
- * Copyright (C) 1999 - 2013 by the deal.II authors
- *
- * This file is part of the deal.II library.
+ * This file has been modified from the example program step-4 of the
+ * deal.II library.
  *
  * The deal.II library is free software; you can use it, redistribute
  * it, and/or modify it under the terms of the GNU Lesser General
@@ -15,28 +15,32 @@
  * ---------------------------------------------------------------------
 
  *
- * Authors: Marco Tezzele, Luca Heltai 2014-2015
+ * Authors: Marco Tezzele, Nicola Cavallini, Luca Heltai 2014-2015
  */
 
-/** This code solve the problem
- *  -\Delta u = f in \Omega
- *  u = 0 on \partial \Omega
- *  with f = 13 \pi^2 u(x,y)
- *  that admits exact solution equals to
- *  u(x,y) = \sin(2 \pi x) \sin(3 \pi y).
- *  \Omega = [-1, 1] \times [-1, 1]
- *  We use Bernstein basis polynomials, and a projection of the values
- *  on the boundary.
+/*  This code is a modification of step-4 of the deal.II library,
+ *  which was used to produce the results of the article
  *
- * Usage: ./exe finite_element_name quadrature_name degree first_cycle last_cycle
- * for example ./exe bernstein legendre 2 1 3
+ *  "Algorithms, data structures and applications for Isogeometric
+ *  Analysis with the deal.II library",
+ *  Marco Tezzele, Nicola Cavallini, Luca Heltai
+ *
+ * Usage: ./poisson finite_element_name quadrature_name degree first_cycle last_cycle
+ * for example ./poisson bernstein legendre 2 1 3
+ *
+ * The accepted arguments of the program are
+ *
+ * finite_element_name  : bernstein, lagrange, lobatto
+ * quadrature_name	: legendre, lobatto
+ * degree		: degree of the finite element space
+ * first_cycle		: initial refinement of the grid
+ * last_cycle		: final refinement of the grid
+ *
+ * Only the differences between this program and step-4 of the deal.II
+ * library have been documented. Please see there for a full
+ * explanation of the undocumented parts.
  */
 
-
-// @sect3{Include files}
-
-// The first few (many?) include files have already been used in the previous
-// example, so we will not explain their meaning here again.
 #include <deal.II/grid/tria.h>
 #include <deal.II/dofs/dof_handler.h>
 #include <deal.II/grid/grid_generator.h>
@@ -65,15 +69,9 @@
 #include <deal.II/base/convergence_table.h>
 #include <fstream>
 #include <iostream>
-
-// This is new, however: in the previous example we got some unwanted output
-// from the linear solvers. If we want to suppress it, we have to include this
-// file and add a single line somewhere to the program (see the main()
-// function below for that):
 #include <deal.II/base/logstream.h>
 
-// The final step, as in previous programs, is to import all the deal.II class
-// and function names into the global namespace:
+
 using namespace dealii;
 
 template <int dim>
@@ -136,6 +134,20 @@ template <int dim>
 class Laplace
 {
 public:
+  // The constructor differ from the step-4 example of the deal.II
+  // library, in that this program admits some parameters from the
+  // command line, and they are passed to the constructor of the
+  // problem as additional arguments.
+  //
+  // 
+  // The accepted arguments of the program are
+  // 
+  // fe_name		: bernstein, lagrange, lobatto
+  // quadrature_name	: legendre, lobatto
+  // degree		: degree of the finite element space
+  // n_cycles_up	: initial refinement of the grid
+  // n_cycles_down	: final refinement of the grid
+  // 
   Laplace (const std::string fe_name,
            const std::string quadrature_name,
            const unsigned int degree,
@@ -161,6 +173,11 @@ private:
   unsigned int cg_iter;
 
   Triangulation<dim>   triangulation;
+
+  // The finite element is a pointer instead of an object, because we
+  // don't know it yet at construction time, and FiniteElements do not
+  // support assignement operators.
+  
   FiniteElement<dim>   *fe;
   DoFHandler<dim>      dof_handler;
 
@@ -227,17 +244,6 @@ Laplace<dim>::~Laplace ()
 }
 
 
-// @sect4{Laplace::make_grid}
-
-// Grid creation is something inherently dimension dependent. However, as long
-// as the domains are sufficiently similar in 2D or 3D, the library can
-// abstract for you. In our case, we would like to again solve on the square
-// $[-1,1]\times [-1,1]$ in 2D, or on the cube $[-1,1] \times [-1,1] \times
-// [-1,1]$ in 3D; both can be termed GridGenerator::hyper_cube(), so we may
-// use the same function in whatever dimension we are. Of course, the
-// functions that create a hypercube in two and three dimensions are very much
-// different, but that is something you need not care about. Let the library
-// handle the difficult things.
 template <int dim>
 void Laplace<dim>::make_grid ()
 {
@@ -245,13 +251,6 @@ void Laplace<dim>::make_grid ()
   triangulation.refine_global (n_cycles_low+1);
 }
 
-// @sect4{Laplace::setup_system}
-
-// This function looks exactly like in the previous example, although it
-// performs actions that in their details are quite different if
-// <code>dim</code> happens to be 3. The only significant difference from a
-// user's perspective is the number of cells resulting, which is much higher
-// in three than in two space dimensions!
 template <int dim>
 void Laplace<dim>::setup_system ()
 {
@@ -272,22 +271,6 @@ void Laplace<dim>::setup_system ()
 }
 
 
-// @sect4{Laplace::assemble_system}
-
-// Unlike in the previous example, we would now like to use a non-constant
-// right hand side function and non-zero boundary values. Both are tasks that
-// are readily achieved with only a few new lines of code in the assemblage of
-// the matrix and right hand side.
-//
-// More interesting, though, is the way we assemble matrix and right hand side
-// vector dimension independently: there is simply no difference to the
-// two-dimensional case. Since the important objects used in this function
-// (quadrature formula, FEValues) depend on the dimension by way of a template
-// parameter as well, they can take care of setting up properly everything for
-// the dimension for which this function is compiled. By declaring all classes
-// which might depend on the dimension using a template parameter, the library
-// can make nearly all work for you and you don't have to care about most
-// things.
 template <int dim>
 void Laplace<dim>::assemble_system ()
 {
@@ -297,10 +280,6 @@ void Laplace<dim>::assemble_system ()
                            update_values   | update_gradients |
                            update_quadrature_points | update_JxW_values);
 
-  // We then again define a few abbreviations. The values of these variables
-  // of course depend on the dimension which we are presently using. However,
-  // the FE and Quadrature classes do all the necessary work for you and you
-  // don't have to care about the dimension dependent parts:
   const unsigned int   dofs_per_cell = fe->dofs_per_cell;
   const unsigned int   n_q_points    = matrix_quad.size();
 
@@ -319,16 +298,6 @@ void Laplace<dim>::assemble_system ()
       cell_matrix = 0;
       cell_rhs = 0;
 
-      // Now we have to assemble the local matrix and right hand side. This is
-      // done exactly like in the previous example, but now we revert the
-      // order of the loops (which we can safely do since they are independent
-      // of each other) and merge the loops for the local matrix and the local
-      // vector as far as possible to make things a bit faster.
-      //
-      // Assembling the right hand side presents the only significant
-      // difference to how we did things in step-3: Instead of using a
-      // constant right hand side with value 1, we use the object representing
-      // the right hand side and evaluate it at the quadrature points:
       for (unsigned int q_point=0; q_point<n_q_points; ++q_point)
         for (unsigned int i=0; i<dofs_per_cell; ++i)
           {
@@ -354,12 +323,6 @@ void Laplace<dim>::assemble_system ()
         }
     }
 
-
-  // As the final step in this function, we wanted to have non-homogeneous
-  // boundary values in this example, unlike the one before. This is a simple
-  // task, we only have to replace the ZeroFunction used there by an object of
-  // the class which describes the boundary values we would like to use
-  // (i.e. the <code>BoundaryValues</code> class declared above):
   std::map<types::global_dof_index,double> boundary_values;
 
   typename FunctionMap<dim>::type  dirichlet_boundary;
@@ -378,29 +341,18 @@ void Laplace<dim>::assemble_system ()
 }
 
 
-// @sect4{Laplace::solve}
-
-// Solving the linear system of equations is something that looks almost
-// identical in most programs. In particular, it is dimension independent, so
-// this function is copied verbatim from the previous example.
 template <int dim>
 void Laplace<dim>::solve ()
 {
   SolverControl           solver_control (100000, 1e-14);
   SolverCG<>              solver (solver_control);
-  // SparseILU<double> preconditioner;
-  // preconditioner.initialize(system_matrix);
 
   std::cout << "   Memory consumption " << system_matrix.memory_consumption()
             << " bytes" << std::endl;
 
-  // solver.solve (system_matrix, solution, system_rhs,
-  //               preconditioner);
   solver.solve (system_matrix, solution, system_rhs,
                 PreconditionIdentity());
 
-  // We have made one addition, though: since we suppress output from the
-  // linear solvers, we have to print the number of iterations by hand.
   std::cout << "   " << solver_control.last_step()
             << " CG iterations needed to obtain convergence."
             << std::endl;
