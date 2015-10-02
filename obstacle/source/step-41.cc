@@ -263,6 +263,9 @@ namespace Step41
   template <int dim>
   ObstacleProblem<dim>::~ObstacleProblem ()
   {
+    bspline_system_matrix.clear();
+    bspline_complete_system_matrix.clear();
+    bspline_mass_matrix.clear();
     if (mappingfe)
       delete mappingfe;
   }
@@ -305,9 +308,11 @@ namespace Step41
 
     sparsity_bspline.copy_from(bspline_sp);
     bspline_system_matrix.reinit(sparsity_bspline);
+    bspline_complete_system_matrix.reinit(sparsity_bspline);
 
     bspline_solution.reinit (iga_handler.n_bspline);
     bspline_system_rhs.reinit (iga_handler.n_bspline);
+    bspline_complete_system_rhs.reinit (iga_handler.n_bspline);
 
     bspline_contact_force.reinit (iga_handler.n_bspline);
     bspline_lambda.reinit (iga_handler.n_bspline);
@@ -319,7 +324,8 @@ namespace Step41
     // Instead of extracting the diagonal of the mass matrix, we perform a
     // mass lumping:
     mass_lumping.reinit(iga_handler.n_bspline);
-    mass_lumping.add(1);
+    for (unsigned int i=0; i<mass_lumping.size(); ++i)
+      mass_lumping[i] = 1;
     bspline_mass_matrix.vmult(diagonal_of_mass_matrix, mass_lumping);
 
     // Boundary values
@@ -453,7 +459,8 @@ namespace Step41
                                              bspline_solution,
                                              bspline_complete_system_rhs);
 
-    bspline_contact_force.ratio (bspline_lambda, diagonal_of_mass_matrix);
+    for (unsigned int i=0; i<bspline_contact_force.size(); ++i)
+      bspline_contact_force[i] = bspline_lambda[i]/diagonal_of_mass_matrix[i];
     bspline_contact_force *= -1;
 
     bspline_constraints.clear();
@@ -615,6 +622,7 @@ namespace Step41
   template <int dim>
   void ObstacleProblem<dim>::compute_error (unsigned int cycle)
   {
+    std::cout << "   Computing error..." << std::endl;
     Vector<float> difference_per_cell (triangulation.n_active_cells());
 
     Vector<double> bspline_sol_dh(dof_handler.n_dofs());
@@ -687,7 +695,7 @@ namespace Step41
 
         solve ();
         update_solution_and_constraints ();
-        // output_results (iteration);
+        output_results (iteration);
 
         if (active_set == active_set_old)
           {
@@ -722,7 +730,7 @@ int main (int argc, char *argv[])
       bool k_refinement = false;
       ConvergenceTable  convergence_table;
 
-      unsigned int n_cycle = 5;
+      unsigned int n_cycle = 6;
       Vector<double> times(n_cycle);
 
       for (unsigned int cycle=1; cycle<n_cycle; ++cycle)
