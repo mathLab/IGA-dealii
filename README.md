@@ -1,4 +1,4 @@
-# IGA-dealii
+# IGA-dealii [![Build Status](https://travis-ci.org/mathLab/IGA-dealii.svg)](https://travis-ci.org/mathLab/IGA-dealii)
 Isogeometric Analysis classes for the deal.II library
 
 This repository contains the code used to generate the results of the article 

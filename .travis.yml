@@ -1,0 +1,24 @@
+sudo : false
+
+notifications:
+  email: false
+
+language: C++
+
+compiler: 
+    - gcc
+
+cache: 
+  directories:
+    - programs
+
+before_install:
+    - export PATH=$PWD/programs/astyle/build/gcc/bin:$PATH
+    - ./scripts/setup_astyle.sh 
+
+script: 
+    - ./scripts/check_indentation.sh 
+
+branches:
+  only:
+    - master

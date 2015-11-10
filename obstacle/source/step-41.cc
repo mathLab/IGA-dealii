@@ -770,8 +770,8 @@ int main (int argc, char *argv[])
 
           // C^1 continuity
           {
-           for (unsigned int i=0; i<subdivisions[0]; ++i)
-            mults[0][i] = degree-1;
+            for (unsigned int i=0; i<subdivisions[0]; ++i)
+              mults[0][i] = degree-1;
           }
 
           // C^2 continuity

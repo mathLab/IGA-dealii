@@ -31,10 +31,10 @@
  * The accepted arguments of the program are
  *
  * finite_element_name  : bernstein, lagrange, lobatto
- * quadrature_name	: legendre, lobatto
- * degree		: degree of the finite element space
- * first_cycle		: initial refinement of the grid
- * last_cycle		: final refinement of the grid
+ * quadrature_name  : legendre, lobatto
+ * degree   : degree of the finite element space
+ * first_cycle    : initial refinement of the grid
+ * last_cycle   : final refinement of the grid
  *
  * Only the differences between this program and step-4 of the deal.II
  * library have been documented. Please see there for a full
@@ -139,15 +139,15 @@ public:
   // command line, and they are passed to the constructor of the
   // problem as additional arguments.
   //
-  // 
+  //
   // The accepted arguments of the program are
-  // 
-  // fe_name		: bernstein, lagrange, lobatto
-  // quadrature_name	: legendre, lobatto
-  // degree		: degree of the finite element space
-  // n_cycles_up	: initial refinement of the grid
-  // n_cycles_down	: final refinement of the grid
-  // 
+  //
+  // fe_name    : bernstein, lagrange, lobatto
+  // quadrature_name  : legendre, lobatto
+  // degree   : degree of the finite element space
+  // n_cycles_up  : initial refinement of the grid
+  // n_cycles_down  : final refinement of the grid
+  //
   Laplace (const std::string fe_name,
            const std::string quadrature_name,
            const unsigned int degree,
@@ -177,7 +177,7 @@ private:
   // The finite element is a pointer instead of an object, because we
   // don't know it yet at construction time, and FiniteElements do not
   // support assignement operators.
-  
+
   FiniteElement<dim>   *fe;
   DoFHandler<dim>      dof_handler;
 
