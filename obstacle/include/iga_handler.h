@@ -263,7 +263,7 @@ public:
     ConstraintMatrix &constraints);
 
 
-  void make_sparsity_pattern (DynamicSparsityPattern & dsp);
+  void make_sparsity_pattern (DynamicSparsityPattern &dsp);
 
 
   mutable Threads::Mutex mutex;

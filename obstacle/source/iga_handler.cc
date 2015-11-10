@@ -702,7 +702,7 @@ IgaHandler<dim,spacedim>::make_sparsity_pattern (DynamicSparsityPattern &dsp)
     for (unsigned int i=0; i<fe.dofs_per_cell; ++i)
       for (unsigned int j=0; j<fe.dofs_per_cell; ++j)
         dsp.add(iga_objects[cell].dof_indices[i],
-               iga_objects[cell].dof_indices[j]);
+                iga_objects[cell].dof_indices[j]);
 }
 
 
